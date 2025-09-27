@@ -2,31 +2,51 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-  // Баланс пользователя
   const [balance, setBalance] = useState(0);
-
-  // Товары магазина
   const [shopItems, setShopItems] = useState([
     { id: 1, name: "Товар 1", price: 10 },
     { id: 2, name: "Товар 2", price: 20 },
   ]);
 
-  // Модальное окно
   const [modal, setModal] = useState({ open: false, type: "", item: null });
   const [inputValue, setInputValue] = useState("");
 
+  // Подключаем Rich Ads
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://richinfo.co/richpartners/telegram/js/tg-ob.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      if (window.TelegramAdsController) {
+        window.TelegramAdsController.initialize({
+          pubId: "988067",
+          appId: "3775",
+        });
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   // Функция просмотра рекламы
   const watchAd = () => {
-    setBalance(balance + 1); // +1 монетка за просмотр рекламы
-    alert("Вы посмотрели рекламу! +1 монетка");
+    if (window.TelegramAdsController) {
+      window.TelegramAdsController.showAd();
+      setBalance(balance + 1); // +1 монета
+    } else {
+      alert("Реклама пока не загрузилась, попробуйте позже");
+    }
   };
 
-  // Открыть модальное окно
+  // Модальные окна
   const openModal = (type, item = null) => {
     setModal({ open: true, type, item });
   };
 
-  // Подтвердить ввод данных в модальном окне
   const confirmModal = () => {
     if (modal.type === "withdraw") {
       alert(`Вывод: ${inputValue} успешно!`);
@@ -44,7 +64,7 @@ function App() {
   };
 
   return (
-    <div className="App" style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
+    <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
     <h1>Mini App Tg2</h1>
     <p>Баланс: {balance} монет</p>
 
