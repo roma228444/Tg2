@@ -11,7 +11,7 @@ function App() {
   const [modal, setModal] = useState({ open: false, type: "", item: null });
   const [inputValue, setInputValue] = useState("");
 
-  // Подключаем Rich Ads
+  // Подключаем Rich Ads с новым appId
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://richinfo.co/richpartners/telegram/js/tg-ob.js";
@@ -19,10 +19,16 @@ function App() {
     document.body.appendChild(script);
 
     script.onload = () => {
+      // eslint-disable-next-line no-undef
+      if (window.TelegramAdsController === undefined && typeof TelegramAdsController !== "undefined") {
+        // создаём контроллер через window
+        window.TelegramAdsController = new window.TelegramAdsController();
+      }
+
       if (window.TelegramAdsController) {
         window.TelegramAdsController.initialize({
           pubId: "988067",
-          appId: "3775",
+          appId: "3777",
         });
       }
     };
@@ -49,8 +55,13 @@ function App() {
 
   const confirmModal = () => {
     if (modal.type === "withdraw") {
-      alert(`Вывод: ${inputValue} успешно!`);
-      setBalance(balance - modal.item?.price || 0);
+      const withdrawAmount = parseInt(inputValue);
+      if (!isNaN(withdrawAmount) && withdrawAmount > 0 && withdrawAmount <= balance) {
+        alert(`Вывод: ${withdrawAmount} монет успешно!`);
+        setBalance(balance - withdrawAmount);
+      } else {
+        alert("Некорректная сумма или недостаточно монет");
+      }
     } else if (modal.type === "buy") {
       if (balance >= modal.item.price) {
         alert(`Вы купили ${modal.item.name}!`);
@@ -81,7 +92,7 @@ function App() {
     </ul>
 
     <h2>Вывод</h2>
-    <button onClick={() => openModal("withdraw", { price: 0 })}>Вывести монеты</button>
+    <button onClick={() => openModal("withdraw")}>Вывести монеты</button>
 
     {/* Модальное окно */}
     {modal.open && (
@@ -101,15 +112,13 @@ function App() {
       <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", width: "300px" }}>
       <h3>{modal.type === "buy" ? `Покупка: ${modal.item.name}` : "Вывод монет"}</h3>
       <input
-      type="text"
-      placeholder="Введите данные"
+      type={modal.type === "withdraw" ? "number" : "text"}
+      placeholder={modal.type === "withdraw" ? "Сколько монет вывести" : "Введите данные"}
       value={inputValue}
       onChange={(e) => setInputValue(e.target.value)}
       style={{ width: "100%", marginBottom: "10px" }}
       />
-      <button onClick={confirmModal} style={{ marginRight: "10px" }}>
-      Подтвердить
-      </button>
+      <button onClick={confirmModal} style={{ marginRight: "10px" }}>Подтвердить</button>
       <button onClick={() => setModal({ open: false, type: "", item: null })}>Отмена</button>
       </div>
       </div>
@@ -119,4 +128,3 @@ function App() {
 }
 
 export default App;
-
